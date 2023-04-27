@@ -1,6 +1,7 @@
 #!/bin/bash
 # Written by Michael Beavitt, aided by GPT-4
 
+
 # Prompt: how do I use a md5sums.txt file to check the integrity of downloaded and unzipped data?
 
 # Usage: ./check_md5sums.sh md5sums.txt
