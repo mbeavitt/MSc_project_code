@@ -3,6 +3,7 @@
 import sys
 import subprocess
 
+
 path = "/exports/eddie/scratch/s1653324/transcriptome_data/raw_data/20220726/test_folder"
 
 command = [
