@@ -13,14 +13,13 @@
 # Task range. Tasks need to go from 1 to the number of files in the target 
 # directory.
 #
-#$ -l h_vmem=1G
-#$ -pe sharedmem 4
+#$ -l h_vmem=2G
 #$ -t 1-48
 #$ -e error
 #$ -o output
 
 # Target directory
-TARGET_DIR=/exports/eddie/scratch/s1653324/transcriptome_data/unzipped_files/raw_data/20220726/raw_sequence_files
+TARGET_DIR=/exports/eddie/scratch/s1653324/transcriptome_data/raw_data/20220726
 
 # Get list of files in target directory
 files=$(ls -1 ${TARGET_DIR}/)
