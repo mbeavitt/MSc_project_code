@@ -14,7 +14,7 @@
 # directory.
 #
 #$ -l h_vmem=2G
-#$ -t 1-48
+#$ -t 1-42
 #$ -e error
 #$ -o output
 
@@ -22,7 +22,7 @@
 TARGET_DIR=/exports/eddie/scratch/s1653324/transcriptome_data/raw_data/20220726
 
 # Get list of files in target directory
-files=$(ls -1 ${TARGET_DIR}/)
+files=$(find ${TARGET_DIR}/ -maxdepth 1 -type d -name "B*")
 
 # Get file to be processed by *this* task 
 # extract the Nth file in the list of files, $files, where N == $SGE_TASK_ID
