@@ -1,5 +1,18 @@
 #!/bin/bash
 
+echo "Loading modules..."
+source ~/.bashrc
+source /etc/profile.d/modules.sh
+module load igmm/apps/STAR/2.7.8a
+module load igmm/apps/cutadapt/1.16
+
+# Clear the scratch space
+rm -r /exports/eddie/scratch/s1653324/*
+
+mkdir /exports/eddie/scratch/s1653324/transcriptome_data
+
+qsub -sync y /home/s1653324/Code/RNAseq/linear/staging_script.sh
+
 if [ $# -ne 1 ]; then
   echo "Usage: $0 <directory>"
   exit 1
@@ -7,20 +20,22 @@ fi
 
 directory="$1"
 
-echo "Loading modules..."
-module load igmm/apps/STAR/2.7.8a
-module load igmm/apps/cutadapt/1.16
+unique_part=$(for file in "$directory"/*.fastq.gz; do echo $file | cut -f1 -d "." | cut -f6 -d "_"; done | uniq)
 
-echo "running cutadapt_single.py from code folder..."
-python3 ~/Code/RNAseq/linear/cutadapt_single.py
+mkdir -p /exports/eddie/scratch/s1653324/fastqc_output/pre-trim/
+mkdir -p /exports/eddie/scratch/s1653324/fastqc_output/post-trim/
+
+qsub -sync y /home/s1653324/Code/RNAseq/array/array-job.sh /home/s1653324/Code/RNAseq/array/fastqc-run.sh 4 4
+
+echo "running cutadapt..."
+
+qsub -sync y /home/s1653324/Code/RNAseq/array/array-job.sh /home/s1653324/Code/RNAseq/array/cutadapt-run.sh 4 1
 
 echo "unzipping output..."
 gunzip "$directory"/trimmed*.gz
 
 # "Cleaning up compressed files..."
 rm "$directory"/*.gz
-
-unique_part=$(for file in "$directory"/*.fastq; do echo $file | cut -f1 -d "." | cut -f7 -d "_"; done | uniq)
 
 # Concatenate the R1 and R2 files from different lanes
 echo "Concatenating files..."
@@ -45,6 +60,11 @@ for seqfile in "$directory"/*.fastq; do
         --outFileNamePrefix "$directory/${unique_part}_${identifier}" \
         --outSAMtype BAM SortedByCoordinate
 done
+
+mkdir -p "$SEQUENCE_PATH"/aligned_reads
+
+echo "Moving bam files.."
+mv "$directory"/*.bam "$SEQUENCE_PATH"/aligned_reads
 
 echo "done!"
 

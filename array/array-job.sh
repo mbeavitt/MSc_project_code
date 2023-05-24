@@ -5,7 +5,9 @@
 # Array Job - process all files in a directory                                 #
 #                                                                              #
 ################################################################################
-
+#
+# Usage: qsub array-job.sh <job_script> <memory_in_gb> <num_cores>
+#
 # Grid Engine options
 #
 #$ -cwd
@@ -13,8 +15,9 @@
 # Task range. Tasks need to go from 1 to the number of files in the target 
 # directory.
 #
-#$ -l h_vmem=2G
+#$ -l h_vmem=${2}G
 #$ -t 1-42
+#$ -pe sharedmem ${3}
 #$ -e error
 #$ -o output
 
