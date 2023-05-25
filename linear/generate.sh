@@ -10,7 +10,10 @@
 #$ -e error
 #$ -o output
 
+source ~/.bashrc
 source /etc/profile.d/modules.sh
 module load igmm/apps/STAR/2.7.8a
 
-STAR --runMode genomeGenerate --runThreadN 8 --genomeDir genom_out/ --genomeFastaFiles combined.fa --sjdbGTFfile combined.gtf
+mkdir ${SCRATCH_SPACE}/genom_out
+
+STAR --runMode genomeGenerate --runThreadN 8 --genomeDir ${SCRATCH_SPACE}/genom_out/ --genomeFastaFiles ${SCRATCH_SPACE}/analysis_genomes/combined.fa --sjdbGTFfile ${SCRATCH_SPACE}/analysis_genomes/combined.gtf
