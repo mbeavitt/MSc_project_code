@@ -10,18 +10,17 @@
 #
 # Grid Engine options
 #
-#$ -cwd
+#
 #
 # Task range. Tasks need to go from 1 to the number of files in the target 
 # directory.
 #
-#$ -l h_vmem=${2}
 #$ -t 1-42
-#$ -pe sharedmem ${3}
 #$ -e error
 #$ -o output
 
-source ~/.bashrc
+SEQUENCE_PATH="/exports/eddie/scratch/s1653324/raw_data/20220726"
+SCRATCH_SPACE="/exports/eddie/scratch/s1653324/"
 
 # Get list of files in target directory
 files=$(find ${SEQUENCE_PATH}/ -maxdepth 1 -type d -name "B*")
@@ -32,4 +31,5 @@ this_file=$(echo "${files}" | sed -n ${SGE_TASK_ID}p)
 echo Processing file: ${this_file} on $HOSTNAME
 
 # Process file
-$1 "${SEQUENCE_PATH}/${this_file}"
+$1 ${this_file}
+

@@ -1,6 +1,6 @@
 # Grid Engine options
 #
-#$ -cwd
+#$ -wd /exports/eddie/scratch/s1653324/
 #
 # Task range. Tasks need to go from 1 to the number of files in the target 
 # directory.
