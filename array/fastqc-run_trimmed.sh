@@ -9,6 +9,6 @@ module load igmm/apps/FastQC/0.11.9
 for file in "${target_dir}"/trimmed*.fastq.gz
 do
     # Call fastqc on the file
-    fastqc "$file" --threads 4 -o "/exports/eddie/scratch/s1653324/fastqc_output/post-trim"
+    fastqc "$file" -o "/exports/eddie/scratch/s1653324/fastqc_output/post-trim"
 done
 

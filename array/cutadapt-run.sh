@@ -6,7 +6,7 @@ source /etc/profile.d/modules.sh
 module load igmm/apps/cutadapt/1.16
 
 # Grab identifier
-unique_part=$(for file in "$path"/*.fastq.gz; do echo $file | cut -f1 -d "." | cut -f6 -d "_"; done | uniq)
+unique_part=$(for file in "$path"/*.fastq.gz; do echo $file | cut -f1 -d "." | cut -f7 -d "_"; done | uniq)
 
 # First command
 cutadapt \

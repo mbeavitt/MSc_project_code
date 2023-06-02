@@ -5,7 +5,7 @@
 # Task range. Tasks need to go from 1 to the number of files in the target 
 # directory.
 #
-#$ -l h_vmem=10G
+#$ -l h_vmem=40G
 #$ -pe sharedmem 8
 #$ -e error
 #$ -o output

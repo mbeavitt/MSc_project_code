@@ -1,5 +1,0 @@
-Loading modules...
-Staging data
-Your job 30541126 ("staging_script.sh") has been submitted
-Job 30541126 exited with exit code 0.
-Unpacking sequence files

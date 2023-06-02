@@ -35,17 +35,17 @@ module load igmm/apps/cutadapt/1.16
 #find /exports/eddie/scratch/s1653324/raw_data/20220726 -maxdepth 2 -type f -name "*.gz" -delete
 #find /exports/eddie/scratch/s1653324/raw_data/20220726 -maxdepth 2 -type f -name "*.count" -delete
 
-#echo "Concatenating lanes..."
-#qsub -cwd -l h_vmem=2G -pe sharedmem 1 -sync y /home/s1653324/Code/RNAseq/array/array-job.sh /home/s1653324/Code/RNAseq/array/cat_files.sh
+echo "Concatenating lanes..."
+qsub -cwd -l h_vmem=200M -pe sharedmem 1 -sync y /home/s1653324/Code/RNAseq/array/array-job.sh /home/s1653324/Code/RNAseq/array/cat_files.sh
 
 #echo "Building genome..."
-#mkdir -p ${SCRATCH_SPACE}/analysis_genomes
-#cp /home/s1653324/rna_analysis_genomes/* ${SCRATCH_SPACE}/analysis_genomes
 #qsub -sync y /home/s1653324/Code/RNAseq/linear/generate.sh
 
-echo "Aligning sequence files to genome..."
-mkdir -p ${SCRATCH_SPACE}/alignment_output
-qsub -wd ${SCRATCH_SPACE} -l h_vmem=40G -pe sharedmem 1 -sync y /home/s1653324/Code/RNAseq/array/array-job.sh /home/s1653324/Code/RNAseq/array/align_sequences.sh
+#echo "Aligning sequence files to genome..."
+#mkdir -p ${SCRATCH_SPACE}/analysis_genomes
+#cp /home/s1653324/rna_analysis_genomes/* ${SCRATCH_SPACE}/analysis_genomes
+#mkdir -p ${SCRATCH_SPACE}/alignment_output
+#qsub -wd ${SCRATCH_SPACE} -l h_vmem=40G -pe sharedmem 1 -sync y /home/s1653324/Code/RNAseq/array/array-job.sh /home/s1653324/Code/RNAseq/array/align_sequences.sh
 
-echo "Done!"
+#echo "Done!"
 

@@ -1,0 +1,46 @@
+Loading modules...
+Aligning sequence files to genome...
+Your job-array 30661323.1-42:1 ("array-job.sh") has been submitted
+Job 30661323.1 exited with exit code 0.
+Job 30661323.5 exited with exit code 0.
+Job 30661323.4 exited with exit code 0.
+Job 30661323.3 exited with exit code 0.
+Job 30661323.10 exited with exit code 0.
+Job 30661323.6 exited with exit code 0.
+Job 30661323.9 exited with exit code 0.
+Job 30661323.8 exited with exit code 0.
+Job 30661323.2 exited with exit code 0.
+Job 30661323.12 exited with exit code 0.
+Job 30661323.11 exited with exit code 0.
+Job 30661323.7 exited with exit code 0.
+Job 30661323.20 exited with exit code 0.
+Job 30661323.22 exited with exit code 0.
+Job 30661323.23 exited with exit code 0.
+Job 30661323.25 exited with exit code 0.
+Job 30661323.16 exited with exit code 0.
+Job 30661323.26 exited with exit code 0.
+Job 30661323.18 exited with exit code 0.
+Job 30661323.19 exited with exit code 0.
+Job 30661323.17 exited with exit code 0.
+Job 30661323.27 exited with exit code 0.
+Job 30661323.15 exited with exit code 0.
+Job 30661323.35 exited with exit code 0.
+Job 30661323.36 exited with exit code 0.
+Job 30661323.24 exited with exit code 0.
+Job 30661323.13 exited with exit code 0.
+Job 30661323.30 exited with exit code 0.
+Job 30661323.34 exited with exit code 0.
+Job 30661323.14 exited with exit code 0.
+Job 30661323.21 exited with exit code 0.
+Job 30661323.28 exited with exit code 0.
+Job 30661323.33 exited with exit code 0.
+Job 30661323.39 exited with exit code 0.
+Job 30661323.42 exited with exit code 0.
+Job 30661323.32 exited with exit code 0.
+Job 30661323.40 exited with exit code 0.
+Job 30661323.29 exited with exit code 0.
+Job 30661323.41 exited with exit code 0.
+Job 30661323.38 exited with exit code 0.
+Job 30661323.31 exited with exit code 0.
+Job 30661323.37 exited with exit code 0.
+Done!
