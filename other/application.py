@@ -9,33 +9,55 @@ import plotly.graph_objs as go
 import pickle
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
+import dash_bootstrap_components as dbc
 
-def performDR(features_cols, df, technique='umap'):
+import hdbscan
+
+def performDR(features_cols, df, technique='umap', random_seed=None):
 
     df_filtered = df[df[features_cols].notnull().all(axis=1)]
     df_standardized = (df_filtered[features_cols] - df_filtered[features_cols].mean()) / df_filtered[features_cols].std()
+    if random_seed:
+        dr = {'pca': PCA(n_components=3), 'tsne': TSNE(n_components=3, random_state=random_seed), 'umap': UMAP(n_components=3, n_neighbors=20, min_dist=0.6, spread=2, random_state=random_seed)}[technique]
+        dr_result = dr.fit_transform(df_standardized)
+        dr_df = pd.DataFrame(data=dr_result, columns=['Component 1', 'Component 2', 'Component 3'])
 
-    dr = {'pca': PCA(n_components=3), 'tsne': TSNE(n_components=3), 'umap': UMAP(n_components=3, n_neighbors=20, min_dist=0.6, spread=2)}[technique]
-    dr_result = dr.fit_transform(df_standardized)
-    dr_df = pd.DataFrame(data=dr_result, columns=['Component 1', 'Component 2', 'Component 3'])
+    else:
+        dr = {'pca': PCA(n_components=3), 'tsne': TSNE(n_components=3), 'umap': UMAP(n_components=3, n_neighbors=20, min_dist=0.6, spread=2)}[technique]
+        dr_result = dr.fit_transform(df_standardized)
+        dr_df = pd.DataFrame(data=dr_result, columns=['Component 1', 'Component 2', 'Component 3'])
 
     return dr_df
 
 def createFigure(title, point_size, dr_df, master_df, features_cols, label_col, plot_3d=True, hover_data=None):
 
-    # Removing NA values
     valid_rows = master_df[features_cols].notnull().all(axis=1)
 
+    if label_col == "_HDBSCAN_":
+
+        clusterer = hdbscan.HDBSCAN(min_cluster_size=10)
+        clusterer.fit(dr_df)
+        hdb_lab = clusterer.labels_
+
+        # Create a Series from your list, with the same index as the valid_rows
+        labels_series = pd.Series(hdb_lab, index=master_df[valid_rows].index)
+
+        # Assign the labels to the valid rows in master_df
+        master_df.loc[valid_rows, label_col] = labels_series
+
     # Get valid labels
-    labels_df = master_df[label_col][valid_rows]
+    labels_df = master_df[label_col][valid_rows].astype(str)
+
+    pd.concat([master_df['ID'][valid_rows], labels_df], axis=1).to_csv('~/Documents/mooney_files/data/labels.csv', index=False)
 
     # Fill NA values
-    labels_df = labels_df.fillna("not defined")
+    labels_df = labels_df.fillna("NO DATA")
 
     # Convert to list
     labels = labels_df.tolist()
+
 
     # Concatenate with IDs
     labels_df = pd.concat([master_df['ID'][valid_rows], labels_df], axis=1)
@@ -49,9 +71,8 @@ def createFigure(title, point_size, dr_df, master_df, features_cols, label_col, 
     # Factorize the labels based on the sorted label mapping
     labels_df[label_col] = labels_df[label_col].map(label_mapping)
 
-    # Add 'count' column
+    # Add 'count' column for selection box
     labels_df['count'] = labels_df.groupby(label_col).cumcount() + 1
-
 
     # Adding labels to the dimension reduction dataframe and resetting the index so the hover data works too
     dr_df['labels'] = labels
@@ -74,8 +95,8 @@ def createFigure(title, point_size, dr_df, master_df, features_cols, label_col, 
     color_palette = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf', '#999999']
     color_dict = {str(label): color_palette[i % len(color_palette)] for i, label in enumerate(unique_labels)}
 
-    for _, row in labels_df.iterrows():
-        print(row.values)
+    # for _, row in labels_df.iterrows():
+    #     print(row.values)
 
     #print(labels_df)
 
@@ -117,6 +138,17 @@ def createFigure(title, point_size, dr_df, master_df, features_cols, label_col, 
 with open('master_df.pickle', 'rb') as f:
     master_df = pickle.load(f)
 
+# Dropping some problematic columns
+# master_df.drop('2-Unstim-Pop1-PMNs-CD66pos-CD66-MFI', axis=1, inplace=True)
+# master_df.drop('2-PMA-Pop1-PMNs-CD11cpost-CD11c-MFI', axis=1, inplace=True)
+# master_df.drop('2-PMA-Pop1-PMNs-CD66pos-CD66-MFI', axis=1, inplace=True)
+
+# Alternatively, setting to
+master_df['2-Unstim-Pop1-PMNs-CD66pos-CD66-MFI'] = master_df['2-Unstim-Pop1-PMNs-CD66pos-CD66-MFI'].fillna(0)
+master_df['2-PMA-Pop1-PMNs-CD11cpost-CD11c-MFI'] = master_df['2-PMA-Pop1-PMNs-CD11cpost-CD11c-MFI'].fillna(0)
+master_df['2-PMA-Pop1-PMNs-CD66pos-CD66-MFI'] = master_df['2-PMA-Pop1-PMNs-CD66pos-CD66-MFI'].fillna(0)
+
+
 # Creating a table of contents!
 column_dict = {
     "Ungated Flow Cytometry Data": [],
@@ -150,6 +182,8 @@ for i, (start, end) in enumerate(range_list):
         column_dict["Population 1 Flow Data (Inactive Neutrophils)"] = [col for col in master_df.columns[start_idx : end_idx+1] if 'Pop1' in col]
         column_dict["Population 2 Flow Data (Activated Neutrophils)"] = [col for col in master_df.columns[start_idx : end_idx+1] if 'Pop2' in col]
         column_dict["Population 3 Flow Data (Dead Neutrophils)"] = [col for col in master_df.columns[start_idx : end_idx+1] if 'Pop3' in col]
+        column_dict["Flow PMA"] = [col for col in master_df.columns[start_idx : end_idx+1] if 'PMA' in col]
+        column_dict["Flow Unstim"] = [col for col in master_df.columns[start_idx : end_idx+1] if 'Unstim' in col]
     else:  # All other ranges correspond to one category
         key = list(column_dict.keys())[i+3]  # Skip the first four keys
         column_dict[key] = [col for col in master_df.columns[start_idx : end_idx+1]]
@@ -168,7 +202,12 @@ label_colnames = [
     'visit_2_parasites_pa', # presence/absence of parasites on visit 2
     'ID', # Careful using this one to label clusters..!
     'RNAseq_done',
-    'Netosis_responder'
+    'Netosis_responder',
+    'umap_group',
+    'ph_HDBSCAN',
+    'infection_status',
+    'killing_unstim',
+    'killing_pma'
 ]
 
 colour_colnames = [
@@ -184,7 +223,12 @@ colour_colnames = [
     'visit_1_parasites_pa', # presence/absence of parasites on visit 1
     'visit_2_parasites_pa', # presence/absence of parasites on visit 2
     'RNAseq_done',
-    'Netosis_responder'
+    'Netosis_responder',
+    'umap_group',
+    'ph_HDBSCAN',
+    'infection_status',
+    'killing_unstim',
+    'killing_pma'
 ]
 
 label_to_display_map = {
@@ -201,11 +245,22 @@ label_to_display_map = {
     'visit_2_parasites_pa': 'Parasites at End? (y/n)',
     'ID': 'Patient ID',
     'RNAseq_done': 'RNA-seq Data? (y/n)',
-    'Netosis_responder': 'Netosis_responder'
+    'Netosis_responder': 'Netosis_responder',
+    'umap_group': 'umap_group',
+    'ph_HDBSCAN': 'Use legacy HDBSCAN',
+    'infection_status': 'Infection Status',
+    'killing_unstim': 'Killing Ability (Unstim ONLY)',
+    'killing_pma': 'Killing Ability (PMA Stimulation ONLY)'
 }
 
+DR_styles = [
+    "umap",
+    "tsne",
+    "pca"
+]
+
 # Initialize the app
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 application = app.server
 
 # Define the layout
@@ -227,6 +282,12 @@ app.layout = html.Div([
             dcc.Checklist(id='plot_3d', options=[{'label': '3D Plot', 'value': True}], value=[])],
             style={'width': '13%', 'float': 'left'}
         ),
+
+        html.Div([  # Div for HDBSCAN
+            html.Label('Turn on HDBSCAN cluster colouring'),
+            dcc.Checklist(id='hdb_on', options=[{'label': 'HDBSCAN', 'value': True}], value=[])],
+            style={'width': '13%', 'float': 'left'}
+        ),
         
         html.Div([  # Subdiv for features_cols
             html.Label('Feature selection:'),
@@ -242,12 +303,25 @@ app.layout = html.Div([
             dcc.Dropdown(id='label_col', options=[{'label': label_to_display_map[l], 'value': l} for l in colour_colnames], multi=False)],
             style={'width': '23%', 'float': 'left', 'margin-right': '40px'}
         ),
+        html.Div([  # Subdiv for picking DR style
+            html.Label('DR style:'),
+            dcc.Dropdown(id='dr_style', options=[{'label': d, 'value': d} for d in DR_styles], multi=False)],
+            style={'width': '17%', 'float': 'left', 'margin-right': '40px'}
+        ),
 
         html.Div([  # Div for dr_plot
             dcc.Graph(id='dr_plot', config={'displayModeBar': False}, style={'width': '100%', 'height': '100vh', 'margin': '0 auto'},
                     responsive=True)],
             style={'clear': 'both'}
-        )
+        ),
+        
+        html.Div([  
+            html.Label('Enter a random seed for UMAP/tSNE'),
+            dcc.Input(id='random_seed', type='text', value=''),
+            html.Div(id='error_message', style={'color': 'red'})
+        ], style={'width': '30%', 'float': 'left'}
+        ),
+
     ], style={'width': '70%', 'float': 'left', 'margin-bottom': '20px'}),  # Parent Div for features_cols and label_col
 
     html.Div([  # Div for point_size
@@ -277,10 +351,12 @@ fig = go.Figure()
 
 @app.callback(
     Output('intermediate_data', 'data'),
-    [Input('features_cols', 'value'),
-     Input('update_button', 'n_clicks')]
+    [Input('update_button', 'n_clicks')],
+    [State('features_cols', 'value')],
+    [State('dr_style', 'value')],
+    [State('random_seed', 'value')]
 )
-def update_intermediate_data(features_cols, n_clicks):
+def update_intermediate_data(n_clicks, features_cols, dr_style, value):
     if n_clicks is None:
         raise PreventUpdate
 
@@ -288,13 +364,28 @@ def update_intermediate_data(features_cols, n_clicks):
     for feature in features_cols:
         cols += column_dict[feature]
 
-    plot_dataframe = performDR(cols, master_df)
+    plot_dataframe = performDR(cols, master_df, technique=dr_style, random_seed=int(value))
     
     data = plot_dataframe.to_dict('records')
+    # print(data)
     
     # Store both the data and features_cols in the dcc.Store
     return {"data": data, "features_cols": cols}
 
+
+@app.callback(
+    Output('error_message', 'children'),
+    [Input('random_seed', 'value')]
+)
+def update_error_message(input_value):
+    if input_value:
+        try:
+            val = int(input_value)
+            return ''  # if the input is an integer, return an empty string
+        except ValueError:
+            return 'The input should be an integer!'
+    else:
+        return 'The input should not be empty!'
 
 @app.callback(
     Output('selected-data', 'children'),
@@ -315,7 +406,7 @@ def display_selected_data(selectedData):
         for label_id, count in zip(label_ids, counts):
             id_list.extend(labels_df[(labels_df.iloc[:, 1] == label_id) & (labels_df['count'] == count)]['ID'])
 
-        print(id_list)
+        # print(id_list)
         return [html.P(f"ID: {str(id)}") for id in id_list]
     return []
 
@@ -326,26 +417,39 @@ def display_selected_data(selectedData):
      Input('label_col', 'value'),
      Input('hover_cols', 'value'),
      Input('point_size', 'value'),
-     Input('plot_3d', 'value')]
+     Input('plot_3d', 'value'),
+     Input('hdb_on', 'value')]
 )
-def update_plot(intermediate_data, label_col, hover_cols, point_size, plot_3d):
+def update_plot(intermediate_data, label_col, hover_cols, point_size, plot_3d, hdb_on):
 
     global fig
     global labels_df
 
     if intermediate_data is None or label_col is None:
         return fig
+    
+    if hdb_on:
+        data = intermediate_data['data']  # Retrieve the data from intermediate_data
+        features_cols = intermediate_data['features_cols']  # Retrieve the features_cols from intermediate_data
 
-    data = intermediate_data['data']  # Retrieve the data from intermediate_data
-    features_cols = intermediate_data['features_cols']  # Retrieve the features_cols from intermediate_data
+        plot_dataframe = pd.DataFrame(data)
 
-    plot_dataframe = pd.DataFrame(data)
+        updated_fig, labels_df = createFigure(plot_3d=plot_3d, label_col="_HDBSCAN_", title=None, point_size=point_size, dr_df=plot_dataframe, master_df=master_df, features_cols=features_cols, hover_data=hover_cols)
+        fig = updated_fig
 
-    updated_fig, labels_df = createFigure(plot_3d=plot_3d, label_col=label_col, title=None, point_size=point_size, dr_df=plot_dataframe, master_df=master_df, features_cols=features_cols, hover_data=hover_cols)
-    fig = updated_fig
+        return fig
 
-    return fig
+    else:
+        data = intermediate_data['data']  # Retrieve the data from intermediate_data
+        features_cols = intermediate_data['features_cols']  # Retrieve the features_cols from intermediate_data
 
+        plot_dataframe = pd.DataFrame(data)
+
+        updated_fig, labels_df = createFigure(plot_3d=plot_3d, label_col=label_col, title=None, point_size=point_size, dr_df=plot_dataframe, master_df=master_df, features_cols=features_cols, hover_data=hover_cols)
+        fig = updated_fig
+
+        return fig
+    
 # Run the app
 if __name__ == '__main__':
     application.run(host='0.0.0.0', debug=True, use_reloader=False, port=8080)
